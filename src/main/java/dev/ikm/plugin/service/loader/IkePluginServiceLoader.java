@@ -55,9 +55,31 @@ public class IkePluginServiceLoader implements PluginServiceLoader {
     @Override
     public <S> ServiceLoader<S> loader(Class<S> service) {
         ensureUses(service);
-        return ServiceLoader.load(IkePluginServiceLoader.class.getModule().getLayer(), service);
-    }
+        LOG.debug("Loading services for: {}", service.getName());
+        ModuleLayer layer = IkePluginServiceLoader.class.getModule().getLayer();
+        LOG.debug("Service loader using module layer with {} modules", layer.modules().size());
 
+        ServiceLoader<S> serviceLoader = ServiceLoader.load(layer, service);
+
+        // Log discovered services
+        int serviceCount = 0;
+        for (S svc : serviceLoader) {
+            serviceCount++;
+            LOG.info("Discovered service implementation: {} for service: {}",
+                    svc.getClass().getName(), service.getName());
+        }
+
+        if (serviceCount == 0) {
+            LOG.warn("No implementations found for service: {} in layer with modules: {}",
+                    service.getName(),
+                    layer.modules().stream().map(Module::getName).collect(java.util.stream.Collectors.joining(", ")));
+        } else {
+            LOG.info("Total {} implementation(s) found for service: {}", serviceCount, service.getName());
+        }
+
+        // Return a fresh loader since we consumed it above for logging
+        return ServiceLoader.load(layer, service);
+    }
     /**
      * Ensures that the specified service is registered in the Java module system.
      * <p>
