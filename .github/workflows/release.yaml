@@ -1,10 +1,25 @@
-name: SemVer Release Workflow
+
+name: Release Workflow
 
 run-name: "Releasing ${{ github.event.repository.name }} #${{github.run_number}}"
 
 # Trigger workflow manually
 on:
   workflow_dispatch:
+    inputs:
+      release_version:
+        type: string
+        description: "(Optional) Custom Release Version"
+        required: false
+      version_type:
+        description: 'Development version type to increment'
+        required: true
+        default: 'minor'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
 
 env:
   BRANCH_NAME: ${{ github.ref_name }}
@@ -27,61 +42,9 @@ jobs:
         with:
           token: ${{secrets.IKMDEVOPS_PAT_TOKEN}}
 
-
-      - name: Verify Version
-        run: |
-            CURRENT_VERSION=$(./mvnw help:evaluate -D'expression=project.version' -q -D'forceStdout')
-            CORE_VERSION=$(./mvnw help:evaluate -D'expression=core.artifact.version' -q -D'forceStdout')
-            if [[ "$CURRENT_VERSION" != *"$CORE_VERSION"* ]]; then
-               echo "::error::Current Version Does Not Match Core Version"
-               echo "::error::Current Version: $CURRENT_VERSION"
-               echo "::error::Core Version: $CORE_VERSION"
-               exit 1
-            fi
-
-      - name: Extrapolate IKM Release Property
-        id: newDevVersion
-        run: |
-          CORE_VERSION=$(./mvnw help:evaluate -D'expression=core.artifact.version' -q -D'forceStdout')
-          RC_VERSION=$(./mvnw help:evaluate -D'expression=core.artifact.release' -q -D'forceStdout')
-          RC_NUMBER=$(echo "$RC_VERSION" | grep -o -E '[0-9]+')
-          NEW_RC_NUMBER=$((1 + $RC_NUMBER)) 
-          echo "DEV_VERSION=$CORE_VERSION-r$NEW_RC_NUMBER-SNAPSHOT" >> $GITHUB_OUTPUT
-
       - name: Shared Release Action
         uses: ikmdev/maven-semver-release-action@v4.0.2
         with:
-          version_type: 'pre-release'
+          version_type: ${{ github.event.inputs.version_type }}
           github_token: ${{secrets.GITHUB_TOKEN}}
-          development_version: ${{steps.newDevVersion.outputs.DEV_VERSION}}
-
-      - name: New Release Property
-        id: new_release_property
-        shell: bash
-        run: |
-           echo "VERSION=$(mvn help:evaluate -D'expression=project.version' -q -D'forceStdout')"
-           IFS='-'
-           read -ra arr <<< "$VERSION"
-           for val in "${arr[@]}"
-             do
-               if [[ $val == r* ]]; then
-                   RELEASE_PROPERTY=$val
-               fi
-             done
-            echo "$RELEASE_PROPERTY"
-            echo "::set-output name=PROPERTY::$RELEASE_PROPERTY"
-
-      - name: Update Release Candidate Property
-        run: |
-          mvn versions:set-property \
-            -Dproperty=core.artifact.release \
-            -DnewVersion=$RELEASE_PROPERTY
-             git config user.name "ikmdevops"
-             git config user.email "devops@ikm.dev"
-             git pull -p
-             git commit -am"Updated Release core.artifact.release Property to $RELEASE_PROPERTY"
-             git push
-        env:
-         RELEASE_PROPERTY: ${{steps.new_release_property.outputs.PROPERTY}}
-          
-            
+          release_version: ${{ github.event.inputs.release_version }}
