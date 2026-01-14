@@ -15,6 +15,15 @@
 
     <name>IKE Plugin Service Loader</name>
 
+    <repositories>
+        <repository>
+            <id>tinkar-nexus</id>
+            <url>https://nexus.tinkar.org/repository/ike-public/</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+    </repositories>
+
     <properties>
         <plugin-layer.version>1.0.0-SNAPSHOT</plugin-layer.version>
         <tinkar.version>1.127.0</tinkar.version>
