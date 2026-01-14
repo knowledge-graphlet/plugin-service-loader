@@ -25,7 +25,7 @@
     </repositories>
 
     <properties>
-        <plugin-layer.version>1.0.0-SNAPSHOT</plugin-layer.version>
+        <plugin-layer.version>1.0.0</plugin-layer.version>
         <tinkar.version>1.127.1</tinkar.version>
         <eclipse-collections.version>13.0.0</eclipse-collections.version>
     </properties>
