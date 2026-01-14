@@ -11,7 +11,7 @@
 
     <groupId>dev.ikm.plugin</groupId>
     <artifactId>plugin-service-loader</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
 
     <name>IKE Plugin Service Loader</name>
 
